@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import verifyGoogleToken from './middlewares/verifyGoogleToken'
 import authRoutes from "./routes/authRoutes";
+import photoRoutes from "./routes/photoRoutes";
 
 const prisma = new PrismaClient();
 
@@ -51,6 +52,7 @@ app.get("/api/restricted", verifyGoogleToken, (req, res) => {
 // });
 
 app.use("/auth", authRoutes);
+app.use("/photos", photoRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

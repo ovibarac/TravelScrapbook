@@ -5,7 +5,7 @@ const authService = new AuthService();
 
 const verifyGoogleToken = async (req, res, next) => {
   const client = new OAuth2Client(process.env.CLIENT_ID);
-  const googleToken = req.headers.authorization.split(" ")[1];
+  const googleToken = req.headers.authorization ? req.headers.authorization.split(" ")[1] : undefined;
 
   if (!googleToken) {
     return res.status(401).send({
