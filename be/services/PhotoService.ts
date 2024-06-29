@@ -24,7 +24,7 @@ export class PhotoService {
     const oAuth2Client = new google.auth.OAuth2({
       clientId: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
-      redirectUri: "http://localhost:3000/auth/google/callback",
+      redirectUri: `${process.env.SERVER_URL}:3000/auth/google/callback`,
     });
     oAuth2Client.setCredentials({
       access_token: authToken,
@@ -56,7 +56,7 @@ export class PhotoService {
         photoList.push(photoData);
       }
 
-      console.log('Upload successful')
+      console.log("Upload successful");
 
       const dataPoints = photoList.filter(
         (photo) => photo.latitude && photo.longitude,
@@ -77,7 +77,7 @@ export class PhotoService {
         cluster.map((i) => dataPoints[i]),
       );
 
-      console.log("Clustering successful")
+      console.log("Clustering successful");
 
       let photos = [];
 
@@ -100,7 +100,7 @@ export class PhotoService {
 
         //TODO cluster by date
         //TODO merge clusters?
-        console.log('Trip created with id ' + createdTrip.id);
+        console.log("Trip created with id " + createdTrip.id);
         const newCluster = cluster.map((photo: Photo) => {
           return { ...photo, tripId: createdTrip.id };
         });
@@ -235,16 +235,40 @@ export class PhotoService {
 
   async getAll(userId: string, page: number, pageSize: number) {
     const skip = (page - 1) * pageSize;
+    // const photosGroupedByDate = await this.prisma.$queryRaw`
+    //   SELECT date_trunc('day', date) AS date, json_agg(p ORDER BY date DESC) AS photos
+    //   FROM "Photo" p
+    //   WHERE "userId" = ${userId}
+    //   GROUP BY date_trunc('day', date)
+    //   ORDER BY date_trunc('day', date) DESC
+    //   LIMIT ${pageSize} OFFSET ${skip}
+    // `;
     const photosGroupedByDate = await this.prisma.$queryRaw`
       SELECT date_trunc('day', date) AS date, json_agg(p ORDER BY date DESC) AS photos
       FROM "Photo" p
       WHERE "userId" = ${userId} 
       GROUP BY date_trunc('day', date)
       ORDER BY date_trunc('day', date) DESC
-      LIMIT ${pageSize} OFFSET ${skip}
     `;
 
     return photosGroupedByDate;
+  }
+
+  async editCaption(
+    userId: string,
+    photoId: string,
+    caption: string,
+    description: string,
+  ) {
+    const updatedPhoto = await this.prisma.photo.update({
+      where: { id: photoId, userId },
+      data: {
+        caption,
+        description,
+      },
+    });
+
+    return updatedPhoto;
   }
 
   async getAllByTrip(
@@ -254,16 +278,26 @@ export class PhotoService {
     tripId: string,
   ) {
     const skip = (page - 1) * pageSize;
+    // const photosGroupedByDate = await this.prisma.$queryRaw`
+    //   SELECT date_trunc('day', date) AS date, json_agg(p ORDER BY date DESC) AS photos
+    //   FROM "Photo" p
+    //   WHERE "userId" = ${userId} AND "tripId" = ${tripId}
+    //   GROUP BY date_trunc('day', date)
+    //   ORDER BY date_trunc('day', date) DESC
+    //   LIMIT ${pageSize} OFFSET ${skip}
+    // `;
     const photosGroupedByDate = await this.prisma.$queryRaw`
       SELECT date_trunc('day', date) AS date, json_agg(p ORDER BY date DESC) AS photos
       FROM "Photo" p
       WHERE "userId" = ${userId} AND "tripId" = ${tripId}
       GROUP BY date_trunc('day', date)
       ORDER BY date_trunc('day', date) DESC
-      LIMIT ${pageSize} OFFSET ${skip}
     `;
+    const trip = await this.prisma.trip.findFirst({
+      where: { id: tripId, userId },
+    });
 
-    return photosGroupedByDate;
+    return { photos: photosGroupedByDate, trip };
   }
 
   async getAllTrips(userId: string, page: number, pageSize: number) {
@@ -272,8 +306,21 @@ export class PhotoService {
     const trips = await this.prisma.trip.findMany({
       where: { userId },
       orderBy: { startDate: "desc" },
-      take: pageSize,
-      skip: skip,
+      // take: pageSize,
+      // skip: skip,
     });
+
+    return trips;
+  }
+
+  async editTrip(userId: string, tripId: string, name: string) {
+    const updatedTrip = await this.prisma.trip.update({
+      where: { id: tripId, userId },
+      data: {
+        name,
+      },
+    });
+
+    return updatedTrip;
   }
 }

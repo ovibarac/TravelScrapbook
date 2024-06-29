@@ -6,11 +6,17 @@ import cors from "cors";
 import verifyGoogleToken from './middlewares/verifyGoogleToken'
 import authRoutes from "./routes/authRoutes";
 import photoRoutes from "./routes/photoRoutes";
+import bodyParser from "body-parser";
 
 const prisma = new PrismaClient();
 
 dotenv.config();
 const app = express();
+
+app.use((req, res, next) => {
+  console.log(`Received ${req.method} request for ${req.url}`);
+  next();
+});
 
 app.use(
   session({
@@ -21,10 +27,11 @@ app.use(
 );
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   }),
 );
+app.use(bodyParser.json());
 
 // app.post('/photo', async (req, res) => {
 //   try {

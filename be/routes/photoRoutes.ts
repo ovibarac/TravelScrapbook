@@ -49,6 +49,22 @@ router.get("/", verifyGoogleToken, async (req, res) => {
   }
 });
 
+router.post("/caption", verifyGoogleToken, async (req, res) => {
+  try {
+    const { userId, photoId, caption, description } = req.body;
+    const photo = await photoService.editCaption(
+      userId,
+      photoId,
+      caption,
+      description,
+    );
+    res.json(photo);
+  } catch (error) {
+    console.error("Error updating photo:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/trip", verifyGoogleToken, async (req, res) => {
   try {
     const { userId, page, pageSize, tripId } = req.query;
@@ -58,9 +74,40 @@ router.get("/trip", verifyGoogleToken, async (req, res) => {
       parseInt(pageSize as string),
       tripId as string,
     );
+    console.log(photos)
     res.json(photos);
   } catch (error) {
     console.error("Error retrieving photos:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/trip", verifyGoogleToken, async (req, res) => {
+  try {
+    const { userId, name, tripId } = req.body;
+    const trip = await photoService.editTrip(
+      userId as string,
+      tripId as string,
+      name as string,
+    );
+    res.json(trip);
+  } catch (error) {
+    console.error("Error editing trip:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/trips", verifyGoogleToken, async (req, res) => {
+  try {
+    const { userId, page, pageSize } = req.query;
+    const trips = await photoService.getAllTrips(
+      userId as string,
+      parseInt(page as string),
+      parseInt(pageSize as string),
+    );
+    res.json(trips);
+  } catch (error) {
+    console.error("Error retrieving trips:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

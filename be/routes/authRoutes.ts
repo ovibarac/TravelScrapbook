@@ -10,9 +10,9 @@ const prisma = new PrismaClient();
 const userService = new UserService(prisma);
 
 router.post("/google", async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.header("Access-Control-Allow-Origin", process.env.CLIENT_URL);
   res.header("Referrer-Policy", "no-referrer-when-downgrade");
-  const redirectURL = "http://localhost:3000/auth/google/callback";
+  const redirectURL = `${process.env.SERVER_URL}:3000/auth/google/callback`;
   const oAuth2Client = new OAuth2Client(
     process.env.CLIENT_ID,
     process.env.CLIENT_SECRET,
@@ -46,7 +46,7 @@ const getUserData = async (access_token) => {
 router.get("/google/callback", async (req: SessionRequest, res) => {
   const code = req.query.code as string;
   try {
-    const redirectURL = "http://localhost:3000/auth/google/callback";
+    const redirectURL = `${process.env.SERVER_URL}:3000/auth/google/callback`;
     const oAuth2Client = new OAuth2Client(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
@@ -65,7 +65,7 @@ router.get("/google/callback", async (req: SessionRequest, res) => {
     userinfo.userId = userId;
     req.session.userInfo = userinfo;
     req.session.token = user.access_token;
-    res.redirect("http://localhost:5173/loggedIn");
+    res.redirect(`${process.env.CLIENT_URL}/loggedIn`);
   } catch (err) {
     console.log(err);
   }
