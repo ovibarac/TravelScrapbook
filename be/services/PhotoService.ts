@@ -77,7 +77,7 @@ export class PhotoService {
         cluster.map((i) => dataPoints[i]),
       );
 
-      console.log("Clustering successful");
+      console.log("Clustering successful. No of clusters: " + clusters.length);
 
       let photos = [];
 
@@ -98,8 +98,6 @@ export class PhotoService {
           },
         });
 
-        //TODO cluster by date
-        //TODO merge clusters?
         console.log("Trip created with id " + createdTrip.id);
         const newCluster = cluster.map((photo: Photo) => {
           return { ...photo, tripId: createdTrip.id };
@@ -107,17 +105,17 @@ export class PhotoService {
 
         photos = [...photos, ...newCluster];
       }
-
-      //TODO face upload doar la astea clusterizate acm
-
-      // Perform the clustering
-      // const clusters = geocluster(dataPoints, 1.5);
-      //
-      // // Print the number of clusters and the cluster details
-
-      // //TODO create trips based on clusters, add to prisma (name?)
-      // //TODO assign each photo the corresponding trip id
-      // //TODO push photos as normal
+      photos = [
+        ...photos,
+        ...photoList.filter(
+          (photo) =>
+            !photos.find(
+              (clusteredPhoto) => photo.name === clusteredPhoto.name,
+            ),
+        ),
+      ];
+      console.log('Photos to upload: ')
+      console.log(photos.map(photo => photo.name));
 
       const createdPhotos = await this.prisma.photo.createMany({
         data: photos,
@@ -234,15 +232,6 @@ export class PhotoService {
   }
 
   async getAll(userId: string, page: number, pageSize: number) {
-    const skip = (page - 1) * pageSize;
-    // const photosGroupedByDate = await this.prisma.$queryRaw`
-    //   SELECT date_trunc('day', date) AS date, json_agg(p ORDER BY date DESC) AS photos
-    //   FROM "Photo" p
-    //   WHERE "userId" = ${userId}
-    //   GROUP BY date_trunc('day', date)
-    //   ORDER BY date_trunc('day', date) DESC
-    //   LIMIT ${pageSize} OFFSET ${skip}
-    // `;
     const photosGroupedByDate = await this.prisma.$queryRaw`
       SELECT date_trunc('day', date) AS date, json_agg(p ORDER BY date DESC) AS photos
       FROM "Photo" p
@@ -277,15 +266,6 @@ export class PhotoService {
     pageSize: number,
     tripId: string,
   ) {
-    const skip = (page - 1) * pageSize;
-    // const photosGroupedByDate = await this.prisma.$queryRaw`
-    //   SELECT date_trunc('day', date) AS date, json_agg(p ORDER BY date DESC) AS photos
-    //   FROM "Photo" p
-    //   WHERE "userId" = ${userId} AND "tripId" = ${tripId}
-    //   GROUP BY date_trunc('day', date)
-    //   ORDER BY date_trunc('day', date) DESC
-    //   LIMIT ${pageSize} OFFSET ${skip}
-    // `;
     const photosGroupedByDate = await this.prisma.$queryRaw`
       SELECT date_trunc('day', date) AS date, json_agg(p ORDER BY date DESC) AS photos
       FROM "Photo" p
@@ -306,8 +286,6 @@ export class PhotoService {
     const trips = await this.prisma.trip.findMany({
       where: { userId },
       orderBy: { startDate: "desc" },
-      // take: pageSize,
-      // skip: skip,
     });
 
     return trips;

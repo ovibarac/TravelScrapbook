@@ -24,6 +24,7 @@ router.post(
   async (req: PostPhotosRequest, res) => {
     try {
       const uploadedFiles = req.files;
+      console.log(uploadedFiles)
       const authToken = req.headers.authorization.split(" ")[1];
       await photoService.addPhotos(uploadedFiles, req.body.userId, authToken);
       res.status(200).send("Photos uploaded successfully");

@@ -16,11 +16,12 @@
     "axios": "^1.6.8",
     "body-parser": "^1.20.2",
     "connect-mongo": "^5.1.0",
+    "connect-redis": "^7.1.1",
     "cors": "^2.8.5",
     "dobbyscan": "^1.0.0",
     "dotenv": "^16.4.5",
     "exif-parser": "^0.1.12",
-    "express": "^4.18.3",
+    "express": "^4.19.2",
     "express-session": "^1.18.0",
     "geocluster": "^0.1.1",
     "google-auth-library": "^9.7.0",
@@ -31,6 +32,7 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "prettier": "^3.2.5",
+    "redis": "^4.6.14",
     "tsc": "^2.0.4"
   },
   "devDependencies": {
