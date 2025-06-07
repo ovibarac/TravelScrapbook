@@ -1,13 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import { drive_v3, google } from "googleapis";
 import { Readable } from "stream";
-import dobbyscan from "dobbyscan";
-import geocluster from "geocluster";
 import dbscan from "@cdxoo/dbscan";
 
 import ExifParser from "exif-parser";
 import { Photo } from "../model/Photo";
-import * as cluster from "cluster";
+import { OAuth2Client } from "google-auth-library";
 
 interface BufferedFile extends File {
   buffer: Buffer;
@@ -15,29 +13,32 @@ interface BufferedFile extends File {
 
 export class PhotoService {
   private prisma: PrismaClient;
+  private oAuth2Client: OAuth2Client;
+  private drive: drive_v3.Drive;
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;
-  }
-
-  async addPhotos(files, userId: string, authToken: string) {
-    const oAuth2Client = new google.auth.OAuth2({
+    this.oAuth2Client = new google.auth.OAuth2({
       clientId: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
       redirectUri: `${process.env.SERVER_URL}:3000/auth/google/callback`,
     });
-    oAuth2Client.setCredentials({
+    this.drive = google.drive({
+      version: "v3",
+      auth: this.oAuth2Client,
+    });
+  }
+
+  async addPhotos(files, userId: string, authToken: string) {
+
+    this.oAuth2Client.setCredentials({
       access_token: authToken,
     });
 
     const photoList: Photo[] = [];
-    const drive = google.drive({
-      version: "v3",
-      auth: oAuth2Client,
-    });
 
     const folderName = "TravelScrapbook";
-    const folderId = await this.createOrUpdateFolder(drive, folderName);
+    const folderId = await this.createOrUpdateFolder(this.drive, folderName);
 
     try {
       for (const file of files) {
@@ -50,7 +51,7 @@ export class PhotoService {
           latitude: metadata.tags.GPSLatitude,
           longitude: metadata.tags.GPSLongitude,
         };
-        const webContentLink = await this.uploadToDrive(file, drive, folderId);
+        const webContentLink = await this.uploadToDrive(file, this.drive, folderId);
         const id = this.extractFileId(webContentLink);
         photoData.url = `https://drive.google.com/thumbnail?id=${id}&sz=w${metadata.imageSize.width}`;
         photoList.push(photoData);
@@ -177,27 +178,7 @@ export class PhotoService {
       folderId = response.data.files[0].id;
       console.log(`Folder '${folderName}' already exists with ID: ${folderId}`);
 
-      const permissionsResponse = await drive.permissions.list({
-        fileId: folderId,
-      });
 
-      const permissions = permissionsResponse.data.permissions;
-
-      const hasCorrectPermission = permissions.some((permission) => {
-        return permission.type === "anyone" && permission.role === "reader";
-      });
-
-      if (!hasCorrectPermission) {
-        await drive.permissions.create({
-          fileId: folderId,
-          requestBody: {
-            role: "reader",
-            type: "anyone",
-          },
-        });
-
-        console.log(`Updated permissions for folder '${folderName}'`);
-      }
     } else {
       const createFolderResponse = await drive.files.create({
         requestBody: {

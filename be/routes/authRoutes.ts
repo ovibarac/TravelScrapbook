@@ -4,6 +4,26 @@ import { SessionRequest } from "../model/SessionRequest";
 import verifyGoogleToken from "../middlewares/verifyGoogleToken";
 import { PrismaClient } from "@prisma/client";
 import { UserService } from "../services/UserService";
+import fs from "fs";
+
+const dataFilePath = '/home/ec2-user/be/data.json';
+function readDataFromFile() {
+  try {
+    const data = fs.readFileSync(dataFilePath, 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    console.error('Error reading data file:', err);
+    return {};
+  }
+}
+
+function writeDataToFile(data: any) {
+  try {
+    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error writing data file:', err);
+  }
+}
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -63,8 +83,8 @@ router.get("/google/callback", async (req: SessionRequest, res) => {
     const userId = await userService.addUser(userinfo.email);
 
     userinfo.userId = userId;
-    req.session.userInfo = userinfo;
-    req.session.token = user.access_token;
+    let data = { userInfo: userinfo, token: user.access_token };
+    writeDataToFile(data);//
     res.redirect(`${process.env.CLIENT_URL}/loggedIn`);
   } catch (err) {
     console.log(err);
@@ -72,10 +92,12 @@ router.get("/google/callback", async (req: SessionRequest, res) => {
 });
 
 router.get("/token", async (req: SessionRequest, res) => {
-  const token = req.session.token;
+  const data = readDataFromFile();
+  const token = data.token;
+  const userInfo = data.userInfo;
 
   if (token) {
-    res.json({ token: token, userInfo: req.session.userInfo });
+    res.json({ token, userInfo });
   } else {
     res.status(500).send("Token not found");
   }

@@ -11,12 +11,14 @@ import https from "https";
 import fs from "fs";
 import RedisStoreLib from "connect-redis";
 
+
+
 const prisma = new PrismaClient();
 
 dotenv.config();
 const app = express();
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; //TODO bypass ssl
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 app.use((req, res, next) => {
   console.log(`Received ${req.method} request for ${req.url}`);
@@ -35,7 +37,7 @@ app.use(
   cors({
     origin: [
       process.env.CLIENT_URL,
-      `https://ec2-52-210-175-235.eu-west-1.compute.amazonaws.com`,
+      process.env.SERVER_URL,
     ],
     credentials: true,
   }),
@@ -51,7 +53,12 @@ app.get("/api/restricted", verifyGoogleToken, (req, res) => {
 app.use("/auth", authRoutes);
 app.use("/photos", photoRoutes);
 
+
+const httpsOptions = {
+  key: fs.readFileSync('/home/ec2-user/ssl/key.pem'),
+  cert: fs.readFileSync('/home/ec2-user/ssl/cert.pem'),
+};
 const PORT = process.env.PORT || 3000;
-app.listen(Number(PORT), "0.0.0.0", () => {
-  console.log(`Server is running on port ${PORT}`);
+https.createServer(httpsOptions, app).listen(PORT, () => {
+  console.log(`Server is running on https://localhost:${PORT}`);
 });
