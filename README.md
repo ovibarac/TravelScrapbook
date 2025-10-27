@@ -9,7 +9,8 @@ Travel Scrapbook is a full-stack photo management app made using Express.js and 
 - **Trip Creation**: Automatically group photos into trip albums on upload based on location metadata. Saves trips to backend database.
 - **Edit Captions**: Add or edit captions for photos.
 - **Interactive map**: Browse photos based on location using an interactive map.
-- **Cross-platform
+- **Cross-platform**: Use Ionic for cross-platform compatibility.
+- **Cloud hosting**: Use AWS to host the app on the cloud.
 
 
 ## Technologies
@@ -33,9 +34,12 @@ Travel Scrapbook is a full-stack photo management app made using Express.js and 
 - Code quality: ESLint and Prettier
 
 ### Cloud deployment
- - AWS services: EC2, RDS, S3, CloudFront
-   
+AWS services:
+ - **Back-end hosting**: EC2
+ - **Database management**: RDS
+ - **Front-end hosting**: S3, CloudFront
 
+   
 ## Deployment
 Create ec2 instance and connect (create and save the key locally)
 
@@ -70,3 +74,11 @@ Need this because https is required with OAuth2.0. When making a request, you ne
 Migrate db
 
     npx prisma migrate dev
+
+
+## Screenshots
+<img width="355" height="805" alt="Screenshot from 2024-06-08 20-06-28" src="https://github.com/user-attachments/assets/e01179b0-b879-4266-b814-0522f63214a2" />
+
+<img width="355" height="805" alt="Screenshot from 2024-06-08 20-07-26" src="https://github.com/user-attachments/assets/c534353f-bba0-4467-ad52-5135be00748c" />
+
+<img width="315" height="208" alt="Screenshot from 2024-06-08 20-31-05" src="https://github.com/user-attachments/assets/f898d849-3b9d-4fd0-b1ec-536bff34dee0" />
